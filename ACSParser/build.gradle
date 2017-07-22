@@ -1,0 +1,38 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+def getDate() {
+    def date = new Date()
+    def formattedDate = date.format('yyyyMMdd.HHmm')
+    return formattedDate
+}
+
+
+//create a single Jar with all dependencies
+task fatJar(type: Jar) {
+	def version = getDate()
+	manifest {
+        attributes(
+        	"Specification-Title" : "ACS to Text File Parser",
+        	"Manifest-Version" : "$version",
+        	"Main-Class" : "com.x.acs.action.AcsParserAction"
+        )
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+	compile group: 'log4j', name: 'log4j', version: '1.2.17'
+	compile group: 'javax.mail', name: 'javax.mail-api', version: '1.6.0'
+	compile group: 'com.sun.mail', name: 'javax.mail', version: '1.5.1'
+	
+	
+
+}
