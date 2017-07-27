@@ -50,6 +50,8 @@ public final class ACSParserConstants {
 	public static final String EMAIL_FROM = "EMAIL_FROM";
 	public static final String EMAIL_HOST = "mail.host";
 	public static final String DATA_UPDATE_STRING = "TAGS_FOR_DATA_MANIPULATION";
+	public static final String CHG_NUM_KEY = "Change_Number";
+	public static final String CHG_TYP_LIST = "CHANGE_ORDERS_TYPE_LIST";
 
 	public static Map<String, String> getSecParMap() {
 		return secParMap;
