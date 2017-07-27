@@ -142,7 +142,7 @@ public class ParserAcsToTxt {
 			logger.trace("Processed data Map:\n" + finalMap);
 			
 			generateOutFile(file.getFileName().toString(), finalMap);
-			//moveInputFile(PASS, file);
+			moveInputFile(PASS, file);
 		} catch (IOException | ParserConfigurationException | SAXException e) {
 			logger.error(e.getMessage(), e);
 			moveInputFile(FAIL, file);
@@ -188,7 +188,7 @@ public class ParserAcsToTxt {
 			NodeList chgOrderNodeList = nl.getElementsByTagName(chgType.split(":")[0]);
 			if (chgOrderNodeList != null) {
 				Node coNode = chgOrderNodeList.item(0);
-				if (coNode.getNodeType() == Node.ELEMENT_NODE) {
+				if (coNode!=null && coNode.getNodeType() == Node.ELEMENT_NODE) {
 					try {
 						changeNum = ((Element) coNode).getElementsByTagName(chgType.split(":")[1]).item(0)
 								.getTextContent();
