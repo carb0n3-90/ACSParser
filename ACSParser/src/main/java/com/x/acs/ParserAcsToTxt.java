@@ -216,33 +216,37 @@ public class ParserAcsToTxt {
 					String chldKey = getChildKey(node);
 					attrMap.put(chldKey, newMap);
 				} else {
-					String tagName = ele.getTagName();
-					String tagVal = ele.getTextContent().replaceAll("[\n\r]", " ");
-
-					if (ACSParserConstants.updateDataTagMap.containsKey(tagName)) {
-						String tagSplitter = ACSParserConstants.updateDataTagMap.get(tagName);
-						String tagDataDelimiter = tagSplitter.split("@")[0];
-						String idx = tagSplitter.split("@")[1];
-						try {
-							tagVal = tagVal.replaceAll(tagDataDelimiter + "+", tagDataDelimiter)
-									.split(tagDataDelimiter)[Integer.parseInt(idx)];
-						} catch (NumberFormatException e) {
-							logger.error(tagName + " index should be a number @ TAGS_FOR_DATA_MANIPULATION property.");
-						}
-					}
-					if (attrMap.containsKey(tagName) && attrMap.get(tagName) != null
-							&& attrMap.get(tagName) instanceof String) {
-						String newTagVal = attrMap.get(tagName).toString().concat(", ").concat(tagVal);
-						attrMap.put(tagName, newTagVal);
-					} else {
-						attrMap.put(tagName, tagVal);
-						attrMap.put(PARENTKEY, parentItemNum);
-						attrMap.put(CHG_NUM_KEY, changeNum);
-					}
-
+					populateAttributes(ele,attrMap,parentItemNum);
 				}
 			}
 		}
+	}
+
+	private void populateAttributes(Element ele, Map<String, Object> attrMap, String parentItemNum) {
+		String tagName = ele.getTagName();
+		String tagVal = ele.getTextContent().replaceAll("[\n\r]", " ");
+
+		if (ACSParserConstants.updateDataTagMap.containsKey(tagName)) {
+			String tagSplitter = ACSParserConstants.updateDataTagMap.get(tagName);
+			String tagDataDelimiter = tagSplitter.split("@")[0];
+			String idx = tagSplitter.split("@")[1];
+			try {
+				tagVal = tagVal.replaceAll(tagDataDelimiter + "+", tagDataDelimiter)
+						.split(tagDataDelimiter)[Integer.parseInt(idx)];
+			} catch (NumberFormatException e) {
+				logger.error(tagName + " index should be a number @ TAGS_FOR_DATA_MANIPULATION property.");
+			}
+		}
+		if (attrMap.containsKey(tagName) && attrMap.get(tagName) != null
+				&& attrMap.get(tagName) instanceof String) {
+			String newTagVal = attrMap.get(tagName).toString().concat(", ").concat(tagVal);
+			attrMap.put(tagName, newTagVal);
+		} else {
+			attrMap.put(tagName, tagVal);
+			attrMap.put(PARENTKEY, parentItemNum);
+			attrMap.put(CHG_NUM_KEY, changeNum);
+		}
+		
 	}
 
 	private boolean meetCriteria(Element eleNode) {
@@ -261,18 +265,6 @@ public class ParserAcsToTxt {
 				Pattern pattern = Pattern.compile(crVal, Pattern.CASE_INSENSITIVE);
 		        Matcher matcher = pattern.matcher(crNodeVal);
 		        meetCriteria = !matcher.lookingAt();
-				/*switch (criteria[0].split(":")[1]) {
-				case	"equals":
-					meetCriteria = crVal.equalsIgnoreCase(crNodeVal);break;
-				case	"not equals":
-					meetCriteria = !crVal.equalsIgnoreCase(crNodeVal);break;
-				case	"like":
-					meetCriteria = crNodeVal.indexOf(crVal) > -1;break;
-				case	"not like":
-					meetCriteria = crNodeVal.indexOf(crVal) == -1;break;
-				default: 
-						logger.error("Invalid criteria in property file..."+criteria[0]);
-				}*/
 			}
 		}
 		logger.trace("meetCriteria? "+meetCriteria);
@@ -324,7 +316,7 @@ public class ParserAcsToTxt {
 	private void traverseChildMap(Map<String, Object> attrDataMap, List<List<String>> rows, String attKey) {
 		for (Entry<String, Object> entry : attrDataMap.entrySet()) {
 			String key = entry.getKey();
-			if (key.indexOf(":") > -1) {
+			if (key.indexOf(':') > -1) {
 				logger.trace("Processing item ---> " + key.split(":")[1]);
 			}
 			if (attKey.equalsIgnoreCase(key.split(":")[0])) {
