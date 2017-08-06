@@ -111,6 +111,6 @@ public class Utility {
 	}
 
 	public static boolean isEmptyStr(String str) {
-		return str == null || str.isEmpty() || "null".equals(str);
+		return str == null || str.trim().isEmpty() || "null".equals(str.trim());
 	}
 }

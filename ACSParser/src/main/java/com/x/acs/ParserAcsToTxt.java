@@ -38,12 +38,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Properties;
 
 import javax.mail.MessagingException;
 import javax.xml.parsers.DocumentBuilder;
@@ -137,10 +138,10 @@ public class ParserAcsToTxt {
 
 			Map<String, Object> xmlInMap = readXmlToMap(tmpDir, file.getFileName().toString());
 			logger.trace("Full ATO Map:\n" + xmlInMap);
-			
+
 			Map<String, Object> finalMap = getProcessedMap(xmlInMap);
 			logger.trace("Processed data Map:\n" + finalMap);
-			
+
 			generateOutFile(file.getFileName().toString(), finalMap);
 			moveInputFile(PASS, file);
 		} catch (IOException | ParserConfigurationException | SAXException e) {
@@ -161,7 +162,7 @@ public class ParserAcsToTxt {
 
 		Element nl = doc.getDocumentElement();
 		getAtoChangeNum(nl);
-				
+
 		for (String parTag : prop.getProperty(SEC_TAG).split(",")) {
 			NodeList partsList = nl.getElementsByTagName(ACSParserConstants.secParMap.get(parTag));
 			HashMap<String, Object> attrDataMap = new HashMap<>();
@@ -188,7 +189,7 @@ public class ParserAcsToTxt {
 			NodeList chgOrderNodeList = nl.getElementsByTagName(chgType.split(":")[0]);
 			if (chgOrderNodeList != null) {
 				Node coNode = chgOrderNodeList.item(0);
-				if (coNode!=null && coNode.getNodeType() == Node.ELEMENT_NODE) {
+				if (coNode != null && coNode.getNodeType() == Node.ELEMENT_NODE) {
 					try {
 						changeNum = ((Element) coNode).getElementsByTagName(chgType.split(":")[1]).item(0)
 								.getTextContent();
@@ -197,7 +198,7 @@ public class ParserAcsToTxt {
 						logger.error(e.getMessage(), e);
 					}
 				}
-				
+
 			}
 		}
 	}
@@ -216,7 +217,7 @@ public class ParserAcsToTxt {
 					String chldKey = getChildKey(node);
 					attrMap.put(chldKey, newMap);
 				} else {
-					populateAttributes(ele,attrMap,parentItemNum);
+					populateAttributes(ele, attrMap, parentItemNum);
 				}
 			}
 		}
@@ -226,19 +227,7 @@ public class ParserAcsToTxt {
 		String tagName = ele.getTagName();
 		String tagVal = ele.getTextContent().replaceAll("[\n\r]", " ");
 
-		if (ACSParserConstants.updateDataTagMap.containsKey(tagName)) {
-			String tagSplitter = ACSParserConstants.updateDataTagMap.get(tagName);
-			String tagDataDelimiter = tagSplitter.split("@")[0];
-			String idx = tagSplitter.split("@")[1];
-			try {
-				tagVal = tagVal.replaceAll(tagDataDelimiter + "+", tagDataDelimiter)
-						.split(tagDataDelimiter)[Integer.parseInt(idx)];
-			} catch (NumberFormatException e) {
-				logger.error(tagName + " index should be a number @ TAGS_FOR_DATA_MANIPULATION property.");
-			}
-		}
-		if (attrMap.containsKey(tagName) && attrMap.get(tagName) != null
-				&& attrMap.get(tagName) instanceof String) {
+		if (attrMap.containsKey(tagName) && attrMap.get(tagName) != null && attrMap.get(tagName) instanceof String) {
 			String newTagVal = attrMap.get(tagName).toString().concat(", ").concat(tagVal);
 			attrMap.put(tagName, newTagVal);
 		} else {
@@ -246,28 +235,29 @@ public class ParserAcsToTxt {
 			attrMap.put(PARENTKEY, parentItemNum);
 			attrMap.put(CHG_NUM_KEY, changeNum);
 		}
-		
+
 	}
 
 	private boolean meetCriteria(Element eleNode) {
 		boolean meetCriteria = true;
-		if(!"Parts".equalsIgnoreCase(eleNode.getNodeName())) return true;
-		String [] criteria  =prop.getProperty("CRITERIA_TO_FILTER_PARTS").split(";");
-		logger.trace("..."+criteria[0]);
+		if (!"Parts".equalsIgnoreCase(eleNode.getNodeName()))
+			return true;
+		String[] criteria = prop.getProperty("CRITERIA_TO_FILTER_PARTS").split(";");
+		logger.trace("..." + criteria[0]);
 		NodeList crNl = eleNode.getElementsByTagName(criteria[0].split(":")[0]);
-		if(crNl != null) {
+		if (crNl != null) {
 			logger.trace("nodelist not null....");
 			Node crNode = crNl.item(0);
-			if(crNode != null && crNode.getNodeType() == Node.ELEMENT_NODE) {
-				String crNodeVal = ((Element)crNode).getTextContent();
-				logger.trace("...--> "+crNode.getNodeName()+": "+crNodeVal);
+			if (crNode != null && crNode.getNodeType() == Node.ELEMENT_NODE) {
+				String crNodeVal = ((Element) crNode).getTextContent();
+				logger.trace("...--> " + crNode.getNodeName() + ": " + crNodeVal);
 				String crVal = criteria[0].split(":")[1];
 				Pattern pattern = Pattern.compile(crVal, Pattern.CASE_INSENSITIVE);
-		        Matcher matcher = pattern.matcher(crNodeVal);
-		        meetCriteria = !matcher.lookingAt();
+				Matcher matcher = pattern.matcher(crNodeVal);
+				meetCriteria = !matcher.lookingAt();
 			}
 		}
-		logger.trace("meetCriteria? "+meetCriteria);
+		logger.trace("meetCriteria? " + meetCriteria);
 		return meetCriteria;
 	}
 
@@ -301,26 +291,27 @@ public class ParserAcsToTxt {
 	private Map<String, Object> getProcessedMap(Map<String, Object> attrDataMap) {
 		Map<String, Object> secMap = new HashMap<>();
 		for (String sec : ACSParserConstants.getSecList()) {
-			List<List<String>> rows = new ArrayList<>();
+			List<Map<String, String>> rows = new ArrayList<>();
 			traverseChildMap((Map<String, Object>) attrDataMap.get(ACSParserConstants.secParMap.get(sec)), rows, sec);
 			Collections.sort(rows, new ListComparator());
 			secMap.put(sec, rows);
 		}
 		Gson gson = new Gson();
 		String json = gson.toJson(secMap);
+		logger.debug("Process Json Map...");
 		logger.debug(json);
 		return secMap;
 	}
 
 	@SuppressWarnings("unchecked")
-	private void traverseChildMap(Map<String, Object> attrDataMap, List<List<String>> rows, String attKey) {
+	private void traverseChildMap(Map<String, Object> attrDataMap, List<Map<String, String>> rows, String attKey) {
 		for (Entry<String, Object> entry : attrDataMap.entrySet()) {
 			String key = entry.getKey();
 			if (key.indexOf(':') > -1) {
 				logger.trace("Processing item ---> " + key.split(":")[1]);
 			}
 			if (attKey.equalsIgnoreCase(key.split(":")[0])) {
-				List<String> cols = getColData(attKey, entry.getValue());
+				Map<String, String> cols = getColData(attKey, entry.getValue());
 				if (!cols.isEmpty()) {
 					rows.add(cols);
 				}
@@ -331,14 +322,50 @@ public class ParserAcsToTxt {
 		}
 	}
 
-	private List<String> getColData(String attKey, Object valObj) {
-		List<String> cols = new ArrayList<>();
+	private Map<String, String> getColData(String attKey, Object valObj) {
+		Map<String, String> cols = new LinkedHashMap<>();
 		if (ACSParserConstants.attrMap.containsKey(attKey)) {
 			for (String att : ACSParserConstants.attrMap.get(attKey)) {
-				cols.add(getAttValue(att, valObj));
+				String derAttName = getAttributeName(att);
+				String xmlAttName = att.indexOf('~') > -1 ? att.split("~")[0] : att;
+
+				if (ACSParserConstants.defAttrDataMap.containsKey(derAttName)) {
+					cols.put(derAttName, ACSParserConstants.defAttrDataMap.get(derAttName));
+				} else {
+					String attValue = getAttValue(xmlAttName, valObj);
+					attValue = getDerivedData(derAttName, attValue);
+					cols.put(derAttName, attValue);
+				}
 			}
 		}
 		return cols;
+	}
+
+	private String getDerivedData(String attName, String attValue) {
+		String derAttVale = attValue;
+		if (ACSParserConstants.updateDataTagMap.containsKey(attName)) {
+			String tagSplitter = ACSParserConstants.updateDataTagMap.get(attName);
+			String tagDataDelimiter = tagSplitter.split("@")[0];
+			String idx = tagSplitter.split("@")[1];
+			try {
+				if (attValue.indexOf(tagDataDelimiter) > -1) {
+					derAttVale = attValue.replaceAll(" +", " ").split(Pattern.quote(tagDataDelimiter))[Integer
+							.parseInt(idx)];
+				}
+			} catch (NumberFormatException e) {
+				logger.error(attName + " index should be a number @ TAGS_FOR_DATA_MANIPULATION property.");
+			}
+		}
+		return derAttVale;
+	}
+
+	private String getAttributeName(String att) {
+		String attName = att;
+		if (att.indexOf('~') > -1) {
+			attName = att.split("~")[1];
+		} else if (att.indexOf("->") > -1)
+			attName = att.substring(att.lastIndexOf("->") + 2, att.length());
+		return attName;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -385,7 +412,6 @@ public class ParserAcsToTxt {
 	}
 
 	private void generateOutFile(String inFileName, Map<String, Object> finalMap) throws IOException {
-
 		String outFileName = inFileName.replace(prop.getProperty(SRC_FILE_PREFIX), prop.getProperty(OUT_FILE_PREFIX))
 				.replace(prop.getProperty(SRC_FILE_EXT), prop.getProperty(OUT_FILE_EXT));
 		Path outFile = Paths.get(ACSParserConstants.getDestinationLoc()).resolve(outFileName);
@@ -419,9 +445,9 @@ public class ParserAcsToTxt {
 
 	private String getRowDataFromMap(Object row) {
 		StringBuilder rowData = new StringBuilder();
-		if (row instanceof List) {
-			List<?> cols = (List<?>) row;
-			for (Object col : cols) {
+		if (row instanceof Map<?, ?>) {
+			Map<?, ?> cols = (Map<?, ?>) row;
+			for (Object col : cols.values()) {
 				rowData.append(col.toString()).append(ACSParserConstants.getdLimiter());
 			}
 		} else {

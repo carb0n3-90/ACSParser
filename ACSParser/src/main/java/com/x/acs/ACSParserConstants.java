@@ -19,6 +19,7 @@ public final class ACSParserConstants {
 	static Map<String, String> updateDataTagMap = new HashMap<>();
 	static Map<String, List<String>> uniqueIDMap = new HashMap<>();
 	static Map<String, List<String>> attrMap = new LinkedHashMap<>();
+	static Map<String, String> defAttrDataMap = new HashMap<>();
 
 	public static final String SRC_FILE_PREFIX = "SOURCE_FILE_PREFIX";
 	public static final String OUT_FILE_PREFIX = "OUT_FILE_PREFIX";
@@ -52,6 +53,7 @@ public final class ACSParserConstants {
 	public static final String DATA_UPDATE_STRING = "TAGS_FOR_DATA_MANIPULATION";
 	public static final String CHG_NUM_KEY = "Change_Number";
 	public static final String CHG_TYP_LIST = "CHANGE_ORDERS_TYPE_LIST";
+	private static final String DEFAULT_ATTR_VAL = "DEFAULT_ATTR_AND_VAL";
 
 	public static Map<String, String> getSecParMap() {
 		return secParMap;
@@ -106,31 +108,37 @@ public final class ACSParserConstants {
 		secList = Arrays.asList(prop.getProperty(SEC_TAG).split(","));
 		List<String> secAttSet;
 		for (String sec : secList) {
+			sec = sec.trim();
 			if (!Utility.isEmptyStr(sec)) {
 				secAttSet = Arrays.asList(prop.getProperty(sec.toUpperCase() + "_ATTRIBUTE_MAPPING").split(","));
-				ACSParserConstants.attrMap.put(sec, secAttSet);
+				attrMap.put(sec, secAttSet);
 			}
 		}
 
 		String[] uniIDArray = prop.getProperty(SEC_UNIQ_ID).split(";");
 		for (String uniID : uniIDArray) {
+			uniID = uniID.trim();
 			if (!Utility.isEmptyStr(uniID))
-				ACSParserConstants.uniqueIDMap.put(uniID.split(":")[0], Arrays.asList(uniID.split(":")[1].split(",")));
+				uniqueIDMap.put(uniID.split(":")[0], Arrays.asList(uniID.split(":")[1].split(",")));
 		}
 
-		String[] secParMapping = prop.getProperty(PAR_TAG_SEC).split(";");
-		for (String secParmap : secParMapping) {
-			if (!Utility.isEmptyStr(secParmap))
-				ACSParserConstants.secParMap.put(secParmap.split(":")[0], secParmap.split(":")[1]);
-		}
+		populateMapFromConfig(prop.getProperty(PAR_TAG_SEC), secParMap);
+		populateMapFromConfig(prop.getProperty(DATA_UPDATE_STRING), updateDataTagMap);
+		populateMapFromConfig(prop.getProperty(DEFAULT_ATTR_VAL), defAttrDataMap);
 
-		String[] tagsForDataUpdates = prop.getProperty(DATA_UPDATE_STRING).split(";");
-		for (String strTag : tagsForDataUpdates) {
-			if (!Utility.isEmptyStr(strTag))
-				ACSParserConstants.updateDataTagMap.put(strTag.split(":")[0], strTag.split(":")[1]);
-		}
 		sourceLoc = prop.getProperty(SRC_LOC);
 		destinationLoc = prop.getProperty(DST_LOC);
+
+	}
+
+	private static void populateMapFromConfig(String property, Map<String, String> datMap) {
+		if (property != null) {
+			String[] dataArr = property.split(";");
+			for (String dataStr : dataArr) {
+				if (!Utility.isEmptyStr(dataStr))
+					datMap.put(dataStr.split(":")[0], dataStr.split(":")[1]);
+			}
+		}
 
 	}
 }
