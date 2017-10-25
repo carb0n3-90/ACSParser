@@ -20,6 +20,9 @@ public final class ACSParserConstants {
 	static Map<String, List<String>> uniqueIDMap = new HashMap<>();
 	static Map<String, List<String>> attrMap = new LinkedHashMap<>();
 	static Map<String, String> defAttrDataMap = new HashMap<>();
+	static Map<String,String> recCriteriaMap = new HashMap<>();
+
+	
 
 	public static final String SRC_FILE_PREFIX = "SOURCE_FILE_PREFIX";
 	public static final String OUT_FILE_PREFIX = "OUT_FILE_PREFIX";
@@ -54,6 +57,7 @@ public final class ACSParserConstants {
 	public static final String CHG_NUM_KEY = "Change_Number";
 	public static final String CHG_TYP_LIST = "CHANGE_ORDERS_TYPE_LIST";
 	private static final String DEFAULT_ATTR_VAL = "DEFAULT_ATTR_AND_VAL";
+	private static final String CRITERIA_TO_FILTER_PARTS = "CRITERIA_TO_FILTER_PARTS";
 
 	public static Map<String, String> getSecParMap() {
 		return secParMap;
@@ -102,6 +106,14 @@ public final class ACSParserConstants {
 	private ACSParserConstants() {
 	}
 
+	public static Map<String,String> getRecCriteriaMap() {
+		return recCriteriaMap;
+	}
+
+	public static void setRecCriteriaMap(Map<String,String> recCriteriaMap) {
+		ACSParserConstants.recCriteriaMap = recCriteriaMap;
+	}
+	
 	public static void loadConstatnts(Properties prop) {
 		dLimiter = prop.getProperty(DELIMITKEY);
 
@@ -125,7 +137,7 @@ public final class ACSParserConstants {
 		populateMapFromConfig(prop.getProperty(PAR_TAG_SEC), secParMap);
 		populateMapFromConfig(prop.getProperty(DATA_UPDATE_STRING), updateDataTagMap);
 		populateMapFromConfig(prop.getProperty(DEFAULT_ATTR_VAL), defAttrDataMap);
-
+		populateMapFromConfig(prop.getProperty(CRITERIA_TO_FILTER_PARTS), recCriteriaMap);
 		sourceLoc = prop.getProperty(SRC_LOC);
 		destinationLoc = prop.getProperty(DST_LOC);
 

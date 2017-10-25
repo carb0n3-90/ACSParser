@@ -100,6 +100,7 @@ public class ParserAcsToTxt {
 		logger.info("ACS Parser Job kicks off @" + (sdf.format(new Date())));
 		try {
 			List<Path> inputFiles = readInputFiles();
+			logger.info(inputFiles.size());
 			Path tmpDir = null;
 			try {
 				tmpDir = Files.createTempDirectory(TMP_PRFIX);
@@ -238,7 +239,7 @@ public class ParserAcsToTxt {
 
 	}
 
-	private boolean meetCriteria(Element eleNode) {
+	private boolean meetCriteria1(Element eleNode) {
 		boolean meetCriteria = true;
 		if (!"Parts".equalsIgnoreCase(eleNode.getNodeName()))
 			return true;
@@ -255,6 +256,30 @@ public class ParserAcsToTxt {
 				Pattern pattern = Pattern.compile(crVal, Pattern.CASE_INSENSITIVE);
 				Matcher matcher = pattern.matcher(crNodeVal);
 				meetCriteria = !matcher.lookingAt();
+			}
+		}
+		logger.trace("meetCriteria? " + meetCriteria);
+		return meetCriteria;
+	}
+	
+	
+	private boolean meetCriteria(Element eleNode) {
+		boolean meetCriteria = true;
+		if (ACSParserConstants.getRecCriteriaMap().containsKey(eleNode.getNodeName())) {
+			String recAttrCriteria = ACSParserConstants.getRecCriteriaMap().get(eleNode.getNodeName());
+			NodeList crNl = eleNode.getElementsByTagName(recAttrCriteria.split("->")[0]);
+			if (crNl != null) {
+				logger.trace("nodelist not null....");
+				Node crNode = crNl.item(0);
+				if (crNode != null && crNode.getNodeType() == Node.ELEMENT_NODE) {
+					String crNodeVal = ((Element) crNode).getTextContent().split("\\|")[0];
+					
+					logger.trace("...--> " + crNode.getNodeName() + ": " + crNodeVal);
+					String crVal = recAttrCriteria.split("->")[1];
+					Pattern pattern = Pattern.compile(crVal, Pattern.CASE_INSENSITIVE);
+					Matcher matcher = pattern.matcher(crNodeVal);
+					meetCriteria = !matcher.lookingAt();
+				}
 			}
 		}
 		logger.trace("meetCriteria? " + meetCriteria);
