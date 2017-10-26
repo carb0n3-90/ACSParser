@@ -239,30 +239,6 @@ public class ParserAcsToTxt {
 
 	}
 
-	private boolean meetCriteria1(Element eleNode) {
-		boolean meetCriteria = true;
-		if (!"Parts".equalsIgnoreCase(eleNode.getNodeName()))
-			return true;
-		String[] criteria = prop.getProperty("CRITERIA_TO_FILTER_PARTS").split(";");
-		logger.trace("..." + criteria[0]);
-		NodeList crNl = eleNode.getElementsByTagName(criteria[0].split(":")[0]);
-		if (crNl != null) {
-			logger.trace("nodelist not null....");
-			Node crNode = crNl.item(0);
-			if (crNode != null && crNode.getNodeType() == Node.ELEMENT_NODE) {
-				String crNodeVal = ((Element) crNode).getTextContent();
-				logger.trace("...--> " + crNode.getNodeName() + ": " + crNodeVal);
-				String crVal = criteria[0].split(":")[1];
-				Pattern pattern = Pattern.compile(crVal, Pattern.CASE_INSENSITIVE);
-				Matcher matcher = pattern.matcher(crNodeVal);
-				meetCriteria = !matcher.lookingAt();
-			}
-		}
-		logger.trace("meetCriteria? " + meetCriteria);
-		return meetCriteria;
-	}
-	
-	
 	private boolean meetCriteria(Element eleNode) {
 		boolean meetCriteria = true;
 		if (ACSParserConstants.getRecCriteriaMap().containsKey(eleNode.getNodeName())) {
