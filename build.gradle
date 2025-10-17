@@ -6,8 +6,9 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 //apply plugin: 'application'
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+// Target Java LTS version 21
+sourceCompatibility = '21'
+targetCompatibility = '21'
 
 def getDate() {
     def date = new Date()
